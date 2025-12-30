@@ -25,13 +25,11 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { signIn } from "next-auth/react";
 import { toast } from "sonner";
-import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Spinner } from "@/components/ui/spinner";
 
 export default function LoginPage() {
     const [isLoading, setIsLoading] = useState(false);
-    const router = useRouter();
     const form = useForm<LoginInput>({
         resolver: zodResolver(loginSchema),
         defaultValues: {
@@ -55,7 +53,7 @@ export default function LoginPage() {
             }
 
             toast.success("Login Successfully !");
-            router.push("/");
+           window.location.href = "/dashboard";
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : "An error occurred";
             toast.error(errorMessage);
