@@ -1,9 +1,13 @@
 "use client";
 
 import { User } from "lucide-react";
+import { useSession } from "next-auth/react";
 // import { Button } from "@/components/ui/button";
 
 export default function DashboardHeader() {
+    const session = useSession()
+    const role = (session?.data?.user as { role: string })?.role
+
   return (
     <header className="h-16 bg-white border-b px-6 flex items-center justify-between">
       {/* Left */}
@@ -21,7 +25,7 @@ export default function DashboardHeader() {
           <div className="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center">
             <User className="h-4 w-4" />
           </div>
-          <span className="text-sm font-medium">Admin</span>
+          <span className="text-sm font-medium">{role}</span>
         </div>
       </div>
     </header>
