@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import AppProvider from "@/provider/AppProvider";
 import { Raleway } from "next/font/google";
+import TopLoader from "nextjs-toploader";
 
 // Initialize Raleway font
 const raleway = Raleway({
@@ -26,7 +27,10 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`antialiased ${raleway.className}`}>
-        <AppProvider>{children}</AppProvider>
+        <AppProvider>
+           <TopLoader color="#FACC15" shadow="0 0 10px #147575, 0 0 5px #FACC15" showSpinner={false} height={4} easing="ease-in" />
+          {children}
+          </AppProvider>
       </body>
     </html>
   );
