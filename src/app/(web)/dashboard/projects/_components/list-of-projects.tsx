@@ -32,6 +32,9 @@ import {
 } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
 import { Card } from "@/components/ui/card"
+import EditProjectModal from "./EditProjectModal"
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog"
+import { toast } from "sonner"
 
 type Project = {
     _id: string
@@ -54,6 +57,19 @@ export default function ProjectsPage() {
     const [selectedCategory, setSelectedCategory] = useState("")
     const [currentPage, setCurrentPage] = useState(1)
     const limit = 10
+    const [editOpen, setEditOpen] = useState(false)
+    const [selectedProject, setSelectedProject] = useState<Project | null>(null)
+    const [deleteId, setDeleteId] = useState<string | null>(null)
+
+    const profileColors = [
+        "bg-blue-50",
+        "bg-green-50",
+        "bg-yellow-50",
+        "bg-pink-50",
+        "bg-purple-50",
+        "bg-orange-50",
+    ];
+
 
     // Reset page to 1 when search or category changes
     useEffect(() => {
@@ -81,17 +97,40 @@ export default function ProjectsPage() {
         },
     })
 
-    // Delete project
-    const handleDelete = async (id: string) => {
-        if (!confirm("Are you sure you want to delete this project?")) return
-        const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_API_URL}/projects/${id}`, {
-            method: "DELETE",
-        })
-        if (res.ok) refetch()
+    // Delete profile
+    const handleDelete = async () => {
+        if (!deleteId) return
+
+        const res = await fetch(
+            `${process.env.NEXT_PUBLIC_BACKEND_API_URL}/projects/${deleteId}`,
+            { method: "DELETE" }
+        ).then((res) => res.json())
+
+        if (res.success) {
+            toast.success(res.message)
+        }
+        if (!res.success) {
+            toast.error(res.message)
+        }
+
+
+        setDeleteId(null)
+        refetch()
     }
 
     const projects: Project[] = data?.data || []
     const pagination = data?.pagination
+
+    function getProfileColor(profileId: string) {
+        // Use hash to pick a color consistently
+        let hash = 0;
+        for (let i = 0; i < profileId.length; i++) {
+            hash = profileId.charCodeAt(i) + ((hash << 5) - hash);
+        }
+        const index = Math.abs(hash) % profileColors.length;
+        return profileColors[index];
+    }
+
 
     return (
         <div className="flex flex-col gap-6 p-6">
@@ -167,11 +206,13 @@ export default function ProjectsPage() {
                             </TableRow>
                         ) : (
                             projects.map((project) => (
-                                <TableRow key={project._id} className="hover:bg-muted/40 transition-colors">
-                                    <TableCell className="py-5 font-medium px-6">{project.name}</TableCell>
-                                    <TableCell className="py-5">{project.profile.name}</TableCell>
-                                    <TableCell className="py-5">{project.orderId}</TableCell>
-                                    {[project.figmaLink, project.websiteLink, project.adminLink].map((link, i) => (
+                                <TableRow key={project?._id} className="hover:bg-muted/40 transition-colors">
+                                    <TableCell className="py-5 font-medium px-6">{project?.name}</TableCell>
+                                    <TableCell className={`py-5  ${getProfileColor(project.profile._id)} font-medium`}>
+                                        {project.profile.name}
+                                    </TableCell>
+                                    <TableCell className="py-5">{project?.orderId}</TableCell>
+                                    {[project?.figmaLink, project?.websiteLink, project?.adminLink].map((link, i) => (
                                         <TableCell key={i} className="py-5">
                                             <a
                                                 href={link}
@@ -185,23 +226,30 @@ export default function ProjectsPage() {
                                         </TableCell>
                                     ))}
                                     <TableCell className="py-5">
-                                        <Badge className="px-3 py-1 text-xs">{project.category.name}</Badge>
+                                        <Badge className="px-3 py-1 text-xs">{project?.category?.name}</Badge>
                                     </TableCell>
                                     <TableCell className="py-5 px-2 text-right">
                                         <div className="flex items-center justify-end">
-                                            <Button variant="ghost" size="icon" className="h-9 w-9" asChild>
-                                                <Link href={`/edit-project/${project._id}`}>
-                                                    <PencilIcon className="size-4" />
-                                                </Link>
-                                            </Button>
                                             <Button
                                                 variant="ghost"
                                                 size="icon"
-                                                className="h-9 w-9 text-destructive hover:bg-destructive/10"
-                                                onClick={() => handleDelete(project._id)}
+                                                onClick={() => {
+                                                    setSelectedProject(project)
+                                                    setEditOpen(true)
+                                                }}
                                             >
-                                                <TrashIcon className="size-4" />
+                                                <PencilIcon className="size-4" />
                                             </Button>
+
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                className="text-destructive"
+                                                onClick={() => setDeleteId(project._id)}
+                                            >
+                                                <TrashIcon className="h-4 w-4" />
+                                            </Button>
+
                                         </div>
                                     </TableCell>
                                 </TableRow>
@@ -250,6 +298,36 @@ export default function ProjectsPage() {
                     </div>
                 </div>
             )}
+
+            {/* Delete Confirmation */}
+            <AlertDialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>
+                            Delete Project?
+                        </AlertDialogTitle>
+                        <AlertDialogDescription>
+                            This action cannot be undone. The project will be permanently removed.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                            className="bg-destructive"
+                            onClick={handleDelete}
+                        >
+                            Delete
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+
+            <EditProjectModal
+                open={editOpen}
+                onClose={() => setEditOpen(false)}
+                project={selectedProject}
+            />
         </div>
     )
 }

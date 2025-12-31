@@ -1,10 +1,10 @@
 import React from 'react'
-import ListOfCategory from './_components/list-of-category'
+import ListOfProfile from './_components/list-of-profile'
 
 const page = () => {
   return (
     <div>
-      <ListOfCategory/>
+   <ListOfProfile/>
     </div>
   )
 }

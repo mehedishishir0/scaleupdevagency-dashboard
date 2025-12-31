@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import {
+  ClipboardList,
   FolderOpen,
   LayoutPanelLeft,
   LogOut,
@@ -19,6 +20,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { signOut } from "next-auth/react";
+import Image from "next/image";
 
 const navigation = [
   {
@@ -31,11 +33,16 @@ const navigation = [
     href: "/dashboard/projects",
     icon: FolderOpen,
   },
-  // {
-  //   name: "Categories",
-  //   href: "/dashboard/categories",
-  //   icon: ClipboardList,
-  // },
+  {
+    name: "Categories",
+    href: "/dashboard/categories",
+    icon: ClipboardList,
+  },
+  {
+    name: "Profiles",
+    href: "/dashboard/profile",
+    icon: ClipboardList,
+  },
 ];
 
 export function DashboardSidebar() {
@@ -50,10 +57,14 @@ export function DashboardSidebar() {
   return (
     <aside className="flex flex-col w-[320px] bg-white border-r border-gray-200 h-screen">
       {/* Logo / Title */}
-      <div className="px-6 py-6 border-b">
-        <h2 className="text-xl font-bold text-gray-800">
-          Dashboard
-        </h2>
+      <div className="px-6 py-6 mx-auto">
+        <Image
+          src="/logo.svg"
+          alt="Logo"
+          width={900}
+          height={900}
+          className="h-14 w-auto"
+        />
       </div>
 
       {/* Navigation */}
