@@ -41,6 +41,7 @@ type Project = {
     _id: string
     name: string
     figmaLink: string
+    type: string
     websiteLink: string
     adminLink: string
     category: { _id: string; name: string }
@@ -59,6 +60,7 @@ export default function ProjectsPage() {
     const [currentPage, setCurrentPage] = useState(1)
     const limit = 10
     const [editOpen, setEditOpen] = useState(false)
+    const [selectedType, setSelectedType] = useState("")
     const [selectedProject, setSelectedProject] = useState<Project | null>(null)
     const [deleteId, setDeleteId] = useState<string | null>(null)
     const session = useSession()
@@ -82,10 +84,12 @@ export default function ProjectsPage() {
 
     // Fetch projects
     const { data, refetch, isLoading } = useQuery({
-        queryKey: ["projects", searchQuery, selectedCategory, currentPage],
+        queryKey: ["projects", searchQuery, selectedCategory, selectedType, currentPage],
         queryFn: async () => {
+            const categoryQuery = selectedCategory === "all" || !selectedCategory ? "" : selectedCategory
+            const typeQuery = selectedType === "all" || !selectedType ? "" : selectedType
             const res = await fetch(
-                `${process.env.NEXT_PUBLIC_BACKEND_API_URL}/projects?search=${searchQuery}&category=${selectedCategory ? selectedCategory == "all" ? "" : selectedCategory : ""}&page=${currentPage}&limit=${limit}`
+                `${process.env.NEXT_PUBLIC_BACKEND_API_URL}/projects?search=${searchQuery}&category=${categoryQuery}&type=${typeQuery}&page=${currentPage}&limit=${limit}`
             )
             return res.json()
         },
@@ -124,6 +128,7 @@ export default function ProjectsPage() {
 
     const projects: Project[] = data?.data || []
     const pagination = data?.pagination
+    console.log(pagination)
 
     function getProfileColor(profileId: string) {
         // Use hash to pick a color consistently
@@ -178,6 +183,21 @@ export default function ProjectsPage() {
                             ))}
                         </SelectContent>
                     </Select>
+
+                    <Select
+                        value={selectedType}
+                        onValueChange={setSelectedType}
+                    >
+                        <SelectTrigger className="w-full sm:w-[140px]">
+                            <SelectValue placeholder="Select Type" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="all">All</SelectItem>
+                            <SelectItem value="app">App</SelectItem>
+                            <SelectItem value="web">Web</SelectItem>
+                        </SelectContent>
+                    </Select>
+
                 </div>
             </Card>
 
@@ -189,6 +209,7 @@ export default function ProjectsPage() {
                             <TableHead className="py-4 px-6">Client Name</TableHead>
                             <TableHead className="py-4">Profile</TableHead>
                             <TableHead className="py-4">Order ID</TableHead>
+                            <TableHead className="py-4 pr-10">Type</TableHead>
                             <TableHead className="py-4">Figma Link</TableHead>
                             <TableHead className="py-4">Website Link</TableHead>
                             <TableHead className="py-4">Admin Dashboard</TableHead>
@@ -221,6 +242,7 @@ export default function ProjectsPage() {
                                         {project.profile.name}
                                     </TableCell>
                                     <TableCell className="py-5">{project?.orderId}</TableCell>
+                                    <TableCell className="py-5 pr-5">{project?.type}</TableCell>
                                     {[project?.figmaLink, project?.websiteLink, project?.adminLink].map((link, i) => (
                                         <TableCell key={i} className="py-5">
                                             <a
@@ -291,7 +313,7 @@ export default function ProjectsPage() {
                                 key={p}
                                 variant={currentPage === p ? "default" : "outline"}
                                 size="sm"
-                                className={cn(currentPage === p && "bg-gray-200")}
+                                className={cn(currentPage === p && "bg-muted text-black hover:bg-muted")}
                                 onClick={() => setCurrentPage(p)}
                             >
                                 {p}
