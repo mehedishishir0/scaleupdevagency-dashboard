@@ -35,6 +35,7 @@ import { Card } from "@/components/ui/card"
 import EditProjectModal from "./EditProjectModal"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog"
 import { toast } from "sonner"
+import { useSession } from "next-auth/react"
 
 type Project = {
     _id: string
@@ -60,6 +61,9 @@ export default function ProjectsPage() {
     const [editOpen, setEditOpen] = useState(false)
     const [selectedProject, setSelectedProject] = useState<Project | null>(null)
     const [deleteId, setDeleteId] = useState<string | null>(null)
+    const session = useSession()
+    const token = (session?.data?.user as { accessToken: string })?.accessToken
+    const role = (session?.data?.user as { role: string })?.role
 
     const profileColors = [
         "bg-blue-50",
@@ -103,7 +107,7 @@ export default function ProjectsPage() {
 
         const res = await fetch(
             `${process.env.NEXT_PUBLIC_BACKEND_API_URL}/projects/${deleteId}`,
-            { method: "DELETE" }
+            { method: "DELETE", headers: { Authorization: `Bearer ${token}` } }
         ).then((res) => res.json())
 
         if (res.success) {
@@ -137,9 +141,11 @@ export default function ProjectsPage() {
             {/* Header */}
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <h2 className="text-2xl font-semibold">All Projects</h2>
-                <Button size="sm" asChild>
-                    <Link href="/dashboard/projects/add-project">Add New Project</Link>
-                </Button>
+                {role === "admin" &&
+                    <Button size="sm" asChild>
+                        <Link href="/dashboard/projects/add-project">Add New Project</Link>
+                    </Button>
+                }
             </div>
 
             {/* Search & Filter */}
@@ -187,7 +193,10 @@ export default function ProjectsPage() {
                             <TableHead className="py-4">Website Link</TableHead>
                             <TableHead className="py-4">Admin Dashboard</TableHead>
                             <TableHead className="py-4">Category</TableHead>
-                            <TableHead className="py-4 px-6 text-right">Actions</TableHead>
+                            {role === "admin" &&
+
+                                <TableHead className="py-4 px-6 text-right">Actions</TableHead>
+                            }
                         </TableRow>
                     </TableHeader>
 
@@ -228,30 +237,32 @@ export default function ProjectsPage() {
                                     <TableCell className="py-5">
                                         <Badge className="px-3 py-1 text-xs">{project?.category?.name}</Badge>
                                     </TableCell>
-                                    <TableCell className="py-5 px-2 text-right">
-                                        <div className="flex items-center justify-end">
-                                            <Button
-                                                variant="ghost"
-                                                size="icon"
-                                                onClick={() => {
-                                                    setSelectedProject(project)
-                                                    setEditOpen(true)
-                                                }}
-                                            >
-                                                <PencilIcon className="size-4" />
-                                            </Button>
+                                    {role === "admin" &&
+                                        <TableCell className="py-5 px-2 text-right">
+                                            <div className="flex items-center justify-end">
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    onClick={() => {
+                                                        setSelectedProject(project)
+                                                        setEditOpen(true)
+                                                    }}
+                                                >
+                                                    <PencilIcon className="size-4" />
+                                                </Button>
 
-                                            <Button
-                                                variant="ghost"
-                                                size="icon"
-                                                className="text-destructive"
-                                                onClick={() => setDeleteId(project._id)}
-                                            >
-                                                <TrashIcon className="h-4 w-4" />
-                                            </Button>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="text-destructive"
+                                                    onClick={() => setDeleteId(project._id)}
+                                                >
+                                                    <TrashIcon className="h-4 w-4" />
+                                                </Button>
 
-                                        </div>
-                                    </TableCell>
+                                            </div>
+                                        </TableCell>
+                                    }
                                 </TableRow>
                             ))
                         )}

@@ -29,6 +29,7 @@ import {
 import AddProfileModal from "./AddProfileModal"
 import EditProfileModal from "./EditeProfileModal"
 import { toast } from "sonner"
+import { useSession } from "next-auth/react"
 
 
 type Profile = {
@@ -53,12 +54,16 @@ export default function ListOfProfile() {
     const limit = 10
     const [selectedProfile, setSelectedProfile] = useState<Profile | null>(null)
     const [openEditModal, setOpenEditModal] = useState(false)
+    const session = useSession()
+    const token = (session?.data?.user as { accessToken: string })?.accessToken
+    const role = (session?.data?.user as { role: string })?.role
 
     const { data, isLoading, refetch } = useQuery({
         queryKey: ["profiles", currentPage],
         queryFn: async () => {
             const res = await fetch(
-                `${process.env.NEXT_PUBLIC_BACKEND_API_URL}/profile/pagination?limit=${limit}&page=${currentPage}`
+                `${process.env.NEXT_PUBLIC_BACKEND_API_URL}/profile/pagination?limit=${limit}&page=${currentPage}`,
+                { method: "GET", headers: { Authorization: `Bearer ${token}` } }
             )
             return res.json()
         },
@@ -73,7 +78,7 @@ export default function ListOfProfile() {
 
         const res = await fetch(
             `${process.env.NEXT_PUBLIC_BACKEND_API_URL}/profile/${deleteId}`,
-            { method: "DELETE" }
+            { method: "DELETE", headers: { Authorization: `Bearer ${token}` } }
         ).then((res) => res.json())
 
         if (res.success) {
@@ -92,9 +97,11 @@ export default function ListOfProfile() {
             {/* Header */}
             <div className="flex items-center justify-between">
                 <h2 className="text-2xl font-semibold">All Profiles</h2>
-                <Button size="sm" onClick={() => setOpenAddModal(true)}>
-                    Add New Profile
-                </Button>
+                {role === "admin" &&
+                    <Button size="sm" onClick={() => setOpenAddModal(true)}>
+                        Add New Profile
+                    </Button>
+                }
             </div>
 
             {/* Table */}
@@ -104,7 +111,9 @@ export default function ListOfProfile() {
                         <TableRow className="bg-muted/50">
                             <TableHead className="px-6 py-5">Name</TableHead>
                             <TableHead>Created</TableHead>
-                            <TableHead className="text-right px-6">Actions</TableHead>
+                            {role === "admin" &&
+                                <TableHead className="text-right px-6">Actions</TableHead>
+                            }
                         </TableRow>
                     </TableHeader>
 
@@ -131,30 +140,31 @@ export default function ListOfProfile() {
                                     <TableCell>
                                         {new Date(profile.createdAt).toLocaleDateString()}
                                     </TableCell>
+                                    {role === "admin" &&
+                                        <TableCell className="text-right">
+                                            <div className="flex justify-end gap-1">
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    onClick={() => {
+                                                        setSelectedProfile(profile)
+                                                        setOpenEditModal(true)
+                                                    }}
+                                                >
+                                                    <PencilIcon className="h-4 w-4" />
+                                                </Button>
 
-                                    <TableCell className="text-right">
-                                        <div className="flex justify-end gap-1">
-                                            <Button
-                                                variant="ghost"
-                                                size="icon"
-                                                onClick={() => {
-                                                    setSelectedProfile(profile)
-                                                    setOpenEditModal(true)
-                                                }}
-                                            >
-                                                <PencilIcon className="h-4 w-4" />
-                                            </Button>
-
-                                            <Button
-                                                variant="ghost"
-                                                size="icon"
-                                                className="text-destructive"
-                                                onClick={() => setDeleteId(profile._id)}
-                                            >
-                                                <TrashIcon className="h-4 w-4" />
-                                            </Button>
-                                        </div>
-                                    </TableCell>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="text-destructive"
+                                                    onClick={() => setDeleteId(profile._id)}
+                                                >
+                                                    <TrashIcon className="h-4 w-4" />
+                                                </Button>
+                                            </div>
+                                        </TableCell>
+                                    }
                                 </TableRow>
                             ))
                         )}

@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/dialog"
 import { Spinner } from "@/components/ui/spinner"
 import Image from "next/image"
+import { useSession } from "next-auth/react"
 
 type Profile = {
     _id: string
@@ -37,6 +38,8 @@ type FormData = {
 export default function EditProfileModal({ open, onClose, profile, onSuccess }: Props) {
     const [name, setName] = useState(profile.name || "")
     const queryClient = useQueryClient()
+    const session = useSession()
+    const token = (session?.data?.user as { accessToken: string })?.accessToken
 
     // Update name when profile prop changes
     useEffect(() => {
@@ -51,6 +54,7 @@ export default function EditProfileModal({ open, onClose, profile, onSuccess }: 
                     method: "PUT",
                     headers: {
                         "Content-Type": "application/json",
+                        Authorization: `Bearer ${token}`,
                     },
                     body: JSON.stringify({ name: body.name }),
                 }

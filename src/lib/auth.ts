@@ -43,9 +43,9 @@ export const authOptions: NextAuthOptions = {
           const user = response.data?.user || response.data;
           if (!user) throw new Error("User data not found");
 
-          if (user.role !== "admin") {
-            throw new Error("Only admin users can access this page");
-          }
+          // if (user.role !== "admin") {
+          //   throw new Error("Only admin users can access this page");
+          // }
 
           // Access token could be inside response.data or response.accessToken
           const accessToken = response.data?.token || response.token || null;

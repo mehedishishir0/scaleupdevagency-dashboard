@@ -30,6 +30,7 @@ import {
 import AddCategoryModal from "./AddCategoryModal"
 import EditeCategoryModal from "./EditeCategoryModal"
 import { toast } from "sonner"
+import { useSession } from "next-auth/react"
 
 type Category = {
     _id: string
@@ -52,6 +53,9 @@ export default function ListOfCategory() {
     const limit = 10
     const [openAddModal, setOpenAddModal] = useState(false)
     const [editCategory, setEditCategory] = useState<Category | null>(null)
+    const session = useSession()
+    const token = (session?.data?.user as { accessToken: string })?.accessToken
+    const role = (session?.data?.user as { role: string })?.role
 
     const { data, isLoading, refetch } = useQuery({
         queryKey: ["categories", currentPage],
@@ -72,7 +76,7 @@ export default function ListOfCategory() {
 
         const res = await fetch(
             `${process.env.NEXT_PUBLIC_BACKEND_API_URL}/categories/${deleteId}`,
-            { method: "DELETE" }
+            { method: "DELETE", headers: { Authorization: `Bearer ${token}` } }
         ).then((res) => res.json())
 
         if (res.success) {
@@ -90,9 +94,11 @@ export default function ListOfCategory() {
             {/* Header */}
             <div className="flex items-center justify-between">
                 <h2 className="text-2xl font-semibold">All Categories</h2>
-                <Button size="sm" variant="default" onClick={() => setOpenAddModal(true)}>
-                    Add New Category
-                </Button>
+                {role === "admin" &&
+                    <Button size="sm" variant="default" onClick={() => setOpenAddModal(true)}>
+                        Add New Category
+                    </Button>
+                }
             </div>
 
             {/* Table */}
@@ -103,7 +109,9 @@ export default function ListOfCategory() {
                             <TableHead className="py-4 px-6">Name</TableHead>
                             <TableHead>Created</TableHead>
                             {/* <TableHead>Status</TableHead> */}
-                            <TableHead className="text-right px-6">Actions</TableHead>
+                            {role === "admin" &&
+                                <TableHead className="text-right px-6">Actions</TableHead>
+                            }
                         </TableRow>
                     </TableHeader>
 
@@ -131,32 +139,30 @@ export default function ListOfCategory() {
                                         {new Date(category.createdAt).toLocaleDateString()}
                                     </TableCell>
 
-                                    {/* <TableCell>
-                                        <Badge variant="secondary">Active</Badge>
-                                    </TableCell> */}
+                                    {role === "admin" &&
+                                        <TableCell className="text-right">
+                                            <div className="flex justify-end gap-1">
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="text-primary"
+                                                    onClick={() => setEditCategory(category)}
+                                                >
 
-                                    <TableCell className="text-right">
-                                        <div className="flex justify-end gap-1">
-                                            <Button
-                                                variant="ghost"
-                                                size="icon"
-                                                className="text-primary"
-                                                onClick={() => setEditCategory(category)}
-                                            >
+                                                    <PencilIcon className="h-4 w-4" />
+                                                </Button>
 
-                                                <PencilIcon className="h-4 w-4" />
-                                            </Button>
-
-                                            <Button
-                                                variant="ghost"
-                                                size="icon"
-                                                className="text-destructive"
-                                                onClick={() => setDeleteId(category._id)}
-                                            >
-                                                <TrashIcon className="h-4 w-4" />
-                                            </Button>
-                                        </div>
-                                    </TableCell>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="text-destructive"
+                                                    onClick={() => setDeleteId(category._id)}
+                                                >
+                                                    <TrashIcon className="h-4 w-4" />
+                                                </Button>
+                                            </div>
+                                        </TableCell>
+                                    }
                                 </TableRow>
                             ))
                         )}

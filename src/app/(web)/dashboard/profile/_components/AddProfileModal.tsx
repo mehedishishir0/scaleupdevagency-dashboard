@@ -16,6 +16,7 @@ import {
     DialogFooter,
 } from "@/components/ui/dialog"
 import Image from "next/image"
+import { useSession } from "next-auth/react"
 
 type Props = {
     open: boolean
@@ -29,6 +30,8 @@ type FormData = {
 export default function AddProfileModal({ open, onClose }: Props) {
     const [name, setName] = useState("")
     const queryClient = useQueryClient()
+    const session = useSession()
+    const token = (session?.data?.user as { accessToken: string })?.accessToken
 
     const { mutate, isPending } = useMutation<
         unknown,
@@ -42,6 +45,7 @@ export default function AddProfileModal({ open, onClose }: Props) {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",
+                        Authorization: `Bearer ${token}`,
                     },
                     body: JSON.stringify({
                         name: body.name,

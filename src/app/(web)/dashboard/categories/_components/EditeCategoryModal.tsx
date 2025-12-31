@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/dialog"
 import { Spinner } from "@/components/ui/spinner"
 import Image from "next/image"
+import { useSession } from "next-auth/react"
 
 type Category = {
     _id: string
@@ -36,6 +37,9 @@ type FormData = {
 export default function EditeCategoryModal({ open, onClose, category, onSuccess }: Props) {
     const [name, setName] = useState(category.name || "")
     const queryClient = useQueryClient()
+    const session = useSession()
+    const token = (session?.data?.user as { accessToken: string })?.accessToken
+
 
     // Update name if category changes
     useEffect(() => {
@@ -50,6 +54,7 @@ export default function EditeCategoryModal({ open, onClose, category, onSuccess 
                     method: "PUT",
                     headers: {
                         "Content-Type": "application/json",
+                        Authorization: `Bearer ${token}`,
                     },
                     body: JSON.stringify({ name: body.name }),
                 }
